@@ -4,6 +4,7 @@
 #include "UnknownAnimInstance.h"
 #include "UnknownCharacter.h"
 #include "GameFramework/CharacterMovementComponent.h"
+#include "Kismet/KismetMathLibrary.h"
 
 void UUnknownAnimInstance::NativeInitializeAnimation()
 {
@@ -30,12 +31,12 @@ void UUnknownAnimInstance::NativeUpdateAnimation(float DeltaTime)
 	Speed = Velocity.Size();
 
 	bIsInAir = UnknownCharacter->GetCharacterMovement()->IsFalling();
-
 	bIsAccelerating = UnknownCharacter->GetCharacterMovement()->GetCurrentAcceleration().Size() > 0.f ? true : false;
-
 	bWeaponEquipped = UnknownCharacter->IsWeaponEquipped();
-
 	bIsCrouched = UnknownCharacter->bIsCrouched;
-
 	bAiming = UnknownCharacter->IsAiming();
+
+	FRotator AimRotation = UnknownCharacter->GetBaseAimRotation();
+	FRotator MovementRotation = UKismetMathLibrary::MakeRotFromX(UnknownCharacter->GetVelocity());
+	YawOffset = UKismetMathLibrary::NormalizedDeltaRotator(MovementRotation, AimRotation).Yaw;
 }
