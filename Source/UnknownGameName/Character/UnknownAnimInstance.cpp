@@ -36,7 +36,10 @@ void UUnknownAnimInstance::NativeUpdateAnimation(float DeltaTime)
 	bIsCrouched = UnknownCharacter->bIsCrouched;
 	bAiming = UnknownCharacter->IsAiming();
 
+	// Offset Yaw for strafing
 	FRotator AimRotation = UnknownCharacter->GetBaseAimRotation();
 	FRotator MovementRotation = UKismetMathLibrary::MakeRotFromX(UnknownCharacter->GetVelocity());
 	YawOffset = UKismetMathLibrary::NormalizedDeltaRotator(MovementRotation, AimRotation).Yaw;
+
+
 }
