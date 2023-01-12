@@ -3,7 +3,7 @@
 #pragma once
 
 #include "CoreMinimal.h"
-#include "Weapon/Weapon.h"
+#include "Weapon.h"
 #include "ProjectileWeapon.generated.h"
 
 /**
@@ -14,4 +14,10 @@ class UNKNOWNGAMENAME_API AProjectileWeapon : public AWeapon
 {
 	GENERATED_BODY()
 	
+private:
+	UPROPERTY(EditAnywhere)
+	TSubclassOf<class AProjectile> ProjectileClass;
+
+private:
+	virtual void Fire(const FVector& HitTarget) override;
 };
