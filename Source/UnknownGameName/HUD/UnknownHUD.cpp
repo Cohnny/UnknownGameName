@@ -1,5 +1,11 @@
 // Fill out your copyright notice in the Description page of Project Settings.
 
 
-#include "HUD/UnknownHUD.h"
+#include "UnknownHUD.h"
 
+void AUnknownHUD::DrawHUD()
+{
+	Super::DrawHUD();
+
+
+}

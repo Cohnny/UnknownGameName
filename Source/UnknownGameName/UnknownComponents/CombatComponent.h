@@ -39,8 +39,12 @@ protected:
 
 	void TraceUnderCrosshairs(FHitResult& TraceHitResult);
 
+	void SetHUDCrosshairs(float DeltaTime);
+
 private:
 	class AUnknownCharacter* Character;
+	class AUnknownPlayerController* Controller;
+	class AUnknownHUD* HUD;
 
 	UPROPERTY(ReplicatedUsing = OnRep_EquippedWeapon)
 	AWeapon* EquippedWeapon;
