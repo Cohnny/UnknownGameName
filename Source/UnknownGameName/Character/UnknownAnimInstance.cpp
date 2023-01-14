@@ -38,6 +38,7 @@ void UUnknownAnimInstance::NativeUpdateAnimation(float DeltaTime)
 	bIsCrouched = UnknownCharacter->bIsCrouched;
 	bAiming = UnknownCharacter->IsAiming();
 	TurningInPlace = UnknownCharacter->GetTurningInPlace();
+	bRotateRootBone = UnknownCharacter->ShouldRotateRootBone();
 
 	// Offset Yaw for strafing
 	FRotator AimRotation = UnknownCharacter->GetBaseAimRotation();
@@ -69,7 +70,8 @@ void UUnknownAnimInstance::NativeUpdateAnimation(float DeltaTime)
 		{
 			bLocallyControlled = true;
 			FTransform RightHandTransform = EquippedWeapon->GetWeaponMesh()->GetSocketTransform(FName("hand_r"), ERelativeTransformSpace::RTS_World);
-			RightHandRotation = UKismetMathLibrary::FindLookAtRotation(RightHandTransform.GetLocation(), RightHandTransform.GetLocation() + (RightHandTransform.GetLocation() - UnknownCharacter->GetHitTarget()));
+			FRotator LookAtRotation = UKismetMathLibrary::FindLookAtRotation(RightHandTransform.GetLocation(), RightHandTransform.GetLocation() + (RightHandTransform.GetLocation() - UnknownCharacter->GetHitTarget()));
+			RightHandRotation = FMath::RInterpTo(RightHandRotation, LookAtRotation, DeltaTime, 30.f);
 		}
 	}
 }
