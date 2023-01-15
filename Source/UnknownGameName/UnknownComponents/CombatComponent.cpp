@@ -74,10 +74,10 @@ void UCombatComponent::Fire()
 {
 	if (bCanFire)
 	{
-		bCanFire = false;
 		ServerFire(HitTarget);
 		if (EquippedWeapon)
 		{
+			bCanFire = false;
 			CrosshairShootingFactor = 0.75f;
 		}
 		StartFireTimer();
@@ -194,6 +194,12 @@ void UCombatComponent::TraceUnderCrosshairs(FHitResult& TraceHitResult)
 			End,
 			ECollisionChannel::ECC_Visibility
 		);
+		// Stops the trace from hitting the sky
+		if (!TraceHitResult.bBlockingHit)
+		{
+			TraceHitResult.ImpactPoint = End;
+		}
+
 		if (TraceHitResult.GetActor() && TraceHitResult.GetActor()->Implements<UInteractWithCrosshairsInterface>())
 		{
 			HUDPackage.CrosshairsColor = FLinearColor::Red;

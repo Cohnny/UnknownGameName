@@ -13,6 +13,7 @@
 #include "Kismet/KismetMathLibrary.h"
 #include "UnknownAnimInstance.h"
 #include "UnknownGameName/UnknownGameName.h"
+#include "UnknownGameName/PlayerController/UnknownPlayerController.h"
 
 // Sets default values
 AUnknownCharacter::AUnknownCharacter()
@@ -52,6 +53,7 @@ void AUnknownCharacter::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& Ou
 	Super::GetLifetimeReplicatedProps(OutLifetimeProps);
 
 	DOREPLIFETIME_CONDITION(AUnknownCharacter, OverlappingWeapon,COND_OwnerOnly);
+	DOREPLIFETIME(AUnknownCharacter, Health);
 }
 
 void AUnknownCharacter::OnRep_ReplicatedMovement()
@@ -65,6 +67,12 @@ void AUnknownCharacter::OnRep_ReplicatedMovement()
 void AUnknownCharacter::BeginPlay()
 {
 	Super::BeginPlay();
+
+	UpdateHUDHealth();
+	if (HasAuthority())
+	{
+		OnTakeAnyDamage.AddDynamic(this, &AUnknownCharacter::ReceiveDamage);
+	}
 }
 
 void AUnknownCharacter::Tick(float DeltaTime)
@@ -150,6 +158,13 @@ void AUnknownCharacter::PlayHitReactMontage()
 		FName SectionName("FromFront");
 		AnimInstance->Montage_JumpToSection(SectionName);
 	}
+}
+
+void AUnknownCharacter::ReceiveDamage(AActor* DamagedActor, float Damage, const UDamageType* DamageType, AController* InstigatorController, AActor* DamageCauser)
+{
+	Health = FMath::Clamp(Health - Damage, 0.f, MaxHealth);
+	UpdateHUDHealth();
+	PlayHitReactMontage();
 }
 
 void AUnknownCharacter::MoveForward(float Value)
@@ -371,11 +386,6 @@ void AUnknownCharacter::TurnInPlace(float DeltaTime)
 	}
 }
 
-void AUnknownCharacter::MulticastHit_Implementation()
-{
-	PlayHitReactMontage();
-}
-
 void AUnknownCharacter::HideCameraIfCharacterClose()
 {
 	if (!IsLocallyControlled())
@@ -406,6 +416,21 @@ void AUnknownCharacter::ServerEquipButtonPressed_Implementation()
 	if (Combat)
 	{
 		Combat->EquipWeapon(OverlappingWeapon);
+	}
+}
+
+void AUnknownCharacter::OnRep_Health()
+{
+	UpdateHUDHealth();
+	PlayHitReactMontage();
+}
+
+void AUnknownCharacter::UpdateHUDHealth()
+{
+	UnknownPlayerController = UnknownPlayerController == nullptr ? Cast<AUnknownPlayerController>(Controller) : UnknownPlayerController;
+	if (UnknownPlayerController)
+	{
+		UnknownPlayerController->SetHUDHealth(Health, MaxHealth);
 	}
 }
 
