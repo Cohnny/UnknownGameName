@@ -15,6 +15,7 @@
 #include "UnknownGameName/UnknownGameName.h"
 #include "UnknownGameName/PlayerController/UnknownPlayerController.h"
 #include "UnknownGameName/GameMode/UnknownGameMode.h"
+#include "TimerManager.h"
 
 // Sets default values
 AUnknownCharacter::AUnknownCharacter()
@@ -65,10 +66,30 @@ void AUnknownCharacter::OnRep_ReplicatedMovement()
 	TimeSinceLastMovementReplication = 0.f;
 }
 
-void AUnknownCharacter::Elim_Implementation()
+void AUnknownCharacter::Elim()
+{
+	MulticastElim();
+	GetWorldTimerManager().SetTimer(
+		ElimTimer,
+		this,
+		&AUnknownCharacter::ElimTimerFinished,
+		ElimDelay
+	);
+}
+
+void AUnknownCharacter::MulticastElim_Implementation()
 {
 	bElimmed = true;
 	PlayElimMontage();
+}
+
+void AUnknownCharacter::ElimTimerFinished()
+{
+	AUnknownGameMode* UnknownGameMode = GetWorld()->GetAuthGameMode<AUnknownGameMode>();
+	if (UnknownGameMode)
+	{
+		UnknownGameMode->RequestRespawn(this, Controller);
+	}
 }
 
 void AUnknownCharacter::BeginPlay()
