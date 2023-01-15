@@ -39,6 +39,7 @@ void UUnknownAnimInstance::NativeUpdateAnimation(float DeltaTime)
 	bAiming = UnknownCharacter->IsAiming();
 	TurningInPlace = UnknownCharacter->GetTurningInPlace();
 	bRotateRootBone = UnknownCharacter->ShouldRotateRootBone();
+	bElimmed = UnknownCharacter->IsElimmed();
 
 	// Offset Yaw for strafing
 	FRotator AimRotation = UnknownCharacter->GetBaseAimRotation();

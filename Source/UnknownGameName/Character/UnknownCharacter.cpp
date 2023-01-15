@@ -14,6 +14,7 @@
 #include "UnknownAnimInstance.h"
 #include "UnknownGameName/UnknownGameName.h"
 #include "UnknownGameName/PlayerController/UnknownPlayerController.h"
+#include "UnknownGameName/GameMode/UnknownGameMode.h"
 
 // Sets default values
 AUnknownCharacter::AUnknownCharacter()
@@ -62,6 +63,12 @@ void AUnknownCharacter::OnRep_ReplicatedMovement()
 	
 	SimProxiesTurn();
 	TimeSinceLastMovementReplication = 0.f;
+}
+
+void AUnknownCharacter::Elim_Implementation()
+{
+	bElimmed = true;
+	PlayElimMontage();
 }
 
 void AUnknownCharacter::BeginPlay()
@@ -144,6 +151,15 @@ void AUnknownCharacter::PlayFireMontage(bool bAiming)
 	}
 }
 
+void AUnknownCharacter::PlayElimMontage()
+{
+	UAnimInstance* AnimInstance = GetMesh()->GetAnimInstance();
+	if (AnimInstance && ElimMontage)
+	{
+		AnimInstance->Montage_Play(ElimMontage);
+	}
+}
+
 void AUnknownCharacter::PlayHitReactMontage()
 {
 	if (Combat == nullptr || Combat->EquippedWeapon == nullptr)
@@ -165,6 +181,17 @@ void AUnknownCharacter::ReceiveDamage(AActor* DamagedActor, float Damage, const 
 	Health = FMath::Clamp(Health - Damage, 0.f, MaxHealth);
 	UpdateHUDHealth();
 	PlayHitReactMontage();
+	if (Health == 0.f)
+	{
+		AUnknownGameMode* UnknownGameMode = GetWorld()->GetAuthGameMode<AUnknownGameMode>();
+		if (UnknownGameMode)
+		{
+			UnknownPlayerController = UnknownPlayerController == nullptr ? Cast<AUnknownPlayerController>(Controller) : UnknownPlayerController;
+			AUnknownPlayerController* AttackerController = Cast<AUnknownPlayerController>(InstigatorController);
+			UnknownGameMode->PlayerEliminated(this, UnknownPlayerController, AttackerController);
+		}
+	}
+	
 }
 
 void AUnknownCharacter::MoveForward(float Value)
