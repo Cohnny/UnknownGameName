@@ -88,6 +88,16 @@ void AUnknownCharacter::Elim()
 	);
 }
 
+void AUnknownCharacter::Destroyed()
+{
+	Super::Destroyed();
+
+	if (ElimBotComponent)
+	{
+		ElimBotComponent->DestroyComponent();
+	}
+}
+
 void AUnknownCharacter::MulticastElim_Implementation()
 {
 	bElimmed = true;
@@ -141,11 +151,6 @@ void AUnknownCharacter::ElimTimerFinished()
 	if (UnknownGameMode)
 	{
 		UnknownGameMode->RequestRespawn(this, Controller);
-	}
-	if (ElimBotComponent)
-	{
-		ElimBotComponent->DestroyComponent();
-
 	}
 }
 
