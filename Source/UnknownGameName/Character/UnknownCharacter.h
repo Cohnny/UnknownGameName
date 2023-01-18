@@ -157,6 +157,12 @@ private:
 	UPROPERTY(EditAnywhere)
 	UParticleSystem* ElimBotEffect;
 
+	UPROPERTY(VisibleAnywhere)
+	UParticleSystemComponent* ElimBotComponent;
+
+	UPROPERTY(EditAnywhere)
+	class USoundCue* ElimBotSound;
+
 
 public:
 	void SetOverlappingWeapon(AWeapon* Weapon);
