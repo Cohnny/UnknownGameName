@@ -6,12 +6,24 @@
 #include "UnknownGameName/HUD/CharacterOverlay.h"
 #include "Components/ProgressBar.h"
 #include "Components/TextBlock.h"
+#include "UnknownGameName/Character/UnknownCharacter.h"
 
 void AUnknownPlayerController::BeginPlay()
 {
 	Super::BeginPlay();
 
 	UnknownHUD = Cast<AUnknownHUD>(GetHUD());
+}
+
+void AUnknownPlayerController::OnPossess(APawn* InPawn)
+{
+	Super::OnPossess(InPawn);
+
+	AUnknownCharacter* UnknownCharacter = Cast<AUnknownCharacter>(InPawn);
+	if (UnknownCharacter)
+	{
+		SetHUDHealth(UnknownCharacter->GetHealth(), UnknownCharacter->GetMaxHealth());
+	}
 }
 
 void AUnknownPlayerController::SetHUDHealth(float Health, float MaxHealth)
@@ -29,3 +41,5 @@ void AUnknownPlayerController::SetHUDHealth(float Health, float MaxHealth)
 		UnknownHUD->CharacterOverlay->HealthText->SetText(FText::FromString(HealthText));
 	}
 }
+
+
