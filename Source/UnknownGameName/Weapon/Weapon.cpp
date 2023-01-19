@@ -209,3 +209,8 @@ void AWeapon::Dropped()
 	UnknownOwnerCharacter = nullptr;
 	UnknownOwnerController = nullptr;
 }
+
+bool AWeapon::IsEmpty()
+{
+	return Ammo <= 0;
+}

@@ -74,10 +74,10 @@ void UCombatComponent::Fire()
 {
 	if (bCanFire)
 	{
+		bCanFire = false;
 		ServerFire(HitTarget);
 		if (EquippedWeapon)
 		{
-			bCanFire = false;
 			CrosshairShootingFactor = 0.75f;
 		}
 		StartFireTimer();

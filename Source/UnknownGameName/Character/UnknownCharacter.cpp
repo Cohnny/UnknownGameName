@@ -101,6 +101,10 @@ void AUnknownCharacter::Destroyed()
 
 void AUnknownCharacter::MulticastElim_Implementation()
 {
+	if (UnknownPlayerController)
+	{
+		UnknownPlayerController->SetHUDWeaponAmmo(0);
+	}
 	bElimmed = true;
 	PlayElimMontage();
 
