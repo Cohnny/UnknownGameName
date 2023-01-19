@@ -119,6 +119,7 @@ private:
 	UFUNCTION()
 	void OnRep_Health();
 
+	UPROPERTY()
 	class AUnknownPlayerController* UnknownPlayerController;
 
 	bool bElimmed = false;
@@ -166,6 +167,7 @@ private:
 	UPROPERTY(EditAnywhere)
 	class USoundCue* ElimBotSound;
 
+	UPROPERTY()
 	class AUnknownPlayerState* UnknownPlayerState;
 
 public:

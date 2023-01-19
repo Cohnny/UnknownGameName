@@ -15,14 +15,14 @@ void AUnknownPlayerState::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& 
 
 void AUnknownPlayerState::AddToScore(float ScoreAmount)
 {
-	SetScore(Score + ScoreAmount);
+	SetScore(GetScore() + ScoreAmount);
 	Character = Character == nullptr ? Cast<AUnknownCharacter>(GetPawn()) : Character;
 	if (Character)
 	{
 		Controller = Controller == nullptr ? Cast<AUnknownPlayerController>(Character->Controller) : Controller;
 		if (Controller)
 		{
-			Controller->SetHUDScore(Score);
+			Controller->SetHUDScore(GetScore());
 		}
 	}
 }
@@ -37,7 +37,7 @@ void AUnknownPlayerState::OnRep_Score()
 		Controller = Controller == nullptr ? Cast<AUnknownPlayerController>(Character->Controller) : Controller;
 		if (Controller)
 		{
-			Controller->SetHUDScore(Score);
+			Controller->SetHUDScore(GetScore());
 		}
 	}
 }
