@@ -111,7 +111,15 @@ void AWeapon::OnRep_Owner()
 {
 	Super::OnRep_Owner();
 	
-	SetHUDAmmo();
+	if (Owner == nullptr)
+	{
+		UnknownOwnerCharacter = nullptr;
+		UnknownOwnerController = nullptr;
+	}
+	else
+	{
+		SetHUDAmmo();
+	}
 }
 
 void AWeapon::SetWeaponState(EWeaponState State)
