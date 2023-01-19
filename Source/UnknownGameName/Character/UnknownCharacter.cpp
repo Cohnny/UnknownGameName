@@ -552,6 +552,7 @@ void AUnknownCharacter::PollInit()
 		if (UnknownPlayerState)
 		{
 			UnknownPlayerState->AddToScore(0.f);
+			UnknownPlayerState->AddToDefeats(0);
 		}
 	}
 }

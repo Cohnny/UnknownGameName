@@ -18,6 +18,11 @@ void AUnknownGameMode::PlayerEliminated(AUnknownCharacter* ElimmedCharacter, AUn
 		AttackerPlayerState->AddToScore(1.0f);
 	}
 
+	if (VictimPlayerState)
+	{
+		VictimPlayerState->AddToDefeats(1);
+	}
+
 	if (ElimmedCharacter)
 	{
 		ElimmedCharacter->Elim();
