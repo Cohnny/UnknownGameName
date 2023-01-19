@@ -51,6 +51,8 @@ protected:
 	UFUNCTION()
 	void ReceiveDamage(AActor* DamagedActor, float Damage, const UDamageType* DamageType, class AController* InstigatorController, AActor* DamageCauser);
 	void UpdateHUDHealth();
+	// Poll for any relevant classes and initialize the HUD
+	void PollInit();
 
 private:
 	UPROPERTY(VisibleAnywhere, Category = Camera)
@@ -164,6 +166,7 @@ private:
 	UPROPERTY(EditAnywhere)
 	class USoundCue* ElimBotSound;
 
+	class AUnknownPlayerState* UnknownPlayerState;
 
 public:
 	void SetOverlappingWeapon(AWeapon* Weapon);

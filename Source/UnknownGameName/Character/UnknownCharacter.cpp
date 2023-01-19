@@ -19,6 +19,7 @@
 #include "Kismet/GameplayStatics.h"
 #include "Sound/SoundCue.h"
 #include "Particles/ParticleSystemComponent.h"
+#include "UnknownGameName/PlayerState/UnknownPlayerState.h"
 
 // Sets default values
 AUnknownCharacter::AUnknownCharacter()
@@ -184,6 +185,7 @@ void AUnknownCharacter::Tick(float DeltaTime)
 	}
 
 	HideCameraIfCharacterClose();
+	PollInit();
 }
 
 void AUnknownCharacter::SetupPlayerInputComponent(UInputComponent* PlayerInputComponent)
@@ -539,6 +541,18 @@ void AUnknownCharacter::UpdateHUDHealth()
 	if (UnknownPlayerController)
 	{
 		UnknownPlayerController->SetHUDHealth(Health, MaxHealth);
+	}
+}
+
+void AUnknownCharacter::PollInit()
+{
+	if (UnknownPlayerState == nullptr)
+	{
+		UnknownPlayerState = GetPlayerState<AUnknownPlayerState>();
+		if (UnknownPlayerState)
+		{
+			UnknownPlayerState->AddToScore(0.f);
+		}
 	}
 }
 

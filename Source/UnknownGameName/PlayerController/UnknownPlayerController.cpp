@@ -42,4 +42,17 @@ void AUnknownPlayerController::SetHUDHealth(float Health, float MaxHealth)
 	}
 }
 
+void AUnknownPlayerController::SetHUDScore(float Score)
+{
+	UnknownHUD = UnknownHUD == nullptr ? Cast<AUnknownHUD>(GetHUD()) : UnknownHUD;
+	bool bHUDValid = UnknownHUD &&
+		UnknownHUD->CharacterOverlay &&
+		UnknownHUD->CharacterOverlay->ScoreAmount;
+	if (bHUDValid)
+	{
+		FString ScoreText = FString::Printf(TEXT("%d"), FMath::FloorToInt(Score));
+		UnknownHUD->CharacterOverlay->ScoreAmount->SetText(FText::FromString(ScoreText));
+	}
+}
+
 

@@ -13,5 +13,11 @@ UCLASS()
 class UNKNOWNGAMENAME_API AUnknownPlayerState : public APlayerState
 {
 	GENERATED_BODY()
-	
+public:
+	virtual void OnRep_Score() override;
+	void AddToScore(float ScoreAmount);
+
+private:
+	class AUnknownCharacter* Character;
+	class AUnknownPlayerController* Controller;
 };
