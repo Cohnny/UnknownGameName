@@ -6,6 +6,7 @@
 #include "GameFramework/CharacterMovementComponent.h"
 #include "Kismet/KismetMathLibrary.h"
 #include "UnknownGameName/Weapon/Weapon.h"
+#include "UnknownGameName/UnknownTypes/CombatState.h"
 
 void UUnknownAnimInstance::NativeInitializeAnimation()
 {
@@ -75,4 +76,6 @@ void UUnknownAnimInstance::NativeUpdateAnimation(float DeltaTime)
 			RightHandRotation = FMath::RInterpTo(RightHandRotation, LookAtRotation, DeltaTime, 30.f);
 		}
 	}
+
+	bUseFABRIK = UnknownCharacter->GetCombatState() != ECombatState::ECS_Reloading;
 }

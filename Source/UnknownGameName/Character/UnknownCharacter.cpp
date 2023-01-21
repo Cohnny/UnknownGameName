@@ -20,6 +20,7 @@
 #include "Sound/SoundCue.h"
 #include "Particles/ParticleSystemComponent.h"
 #include "UnknownGameName/PlayerState/UnknownPlayerState.h"
+#include "UnknownGameName/Weapon/WeaponTypes.h"
 
 // Sets default values
 AUnknownCharacter::AUnknownCharacter()
@@ -209,6 +210,8 @@ void AUnknownCharacter::SetupPlayerInputComponent(UInputComponent* PlayerInputCo
 	PlayerInputComponent->BindAction("Aim", IE_Released, this, &AUnknownCharacter::AimButtonReleased);
 	PlayerInputComponent->BindAction("Fire", IE_Pressed, this, &AUnknownCharacter::FireButtonPressed);
 	PlayerInputComponent->BindAction("Fire", IE_Released, this, &AUnknownCharacter::FireButtonReleased);
+	PlayerInputComponent->BindAction("Reload", IE_Pressed, this, &AUnknownCharacter::ReloadButtonPressed);
+
 
 	bUseControllerRotationYaw = false;
 	GetCharacterMovement()->bOrientRotationToMovement = true;
@@ -236,6 +239,30 @@ void AUnknownCharacter::PlayFireMontage(bool bAiming)
 		AnimInstance->Montage_Play(FireWeaponMontage);
 		FName SectionName;
 		SectionName = bAiming ? FName("RifleAim") : FName("RifleHip");
+		AnimInstance->Montage_JumpToSection(SectionName);
+	}
+}
+
+void AUnknownCharacter::PlayReloadMontage()
+{
+	if (Combat == nullptr || Combat->EquippedWeapon == nullptr)
+	{
+		return;
+	}
+
+	UAnimInstance* AnimInstance = GetMesh()->GetAnimInstance();
+	if (AnimInstance && ReloadMontage)
+	{
+		AnimInstance->Montage_Play(ReloadMontage);
+		FName SectionName;
+
+		switch (Combat->EquippedWeapon->GetWeaponType())
+		{
+		case EWeaponType::EWT_AssaultRifle:
+			SectionName = FName("Rifle");
+			break;
+		}
+
 		AnimInstance->Montage_JumpToSection(SectionName);
 	}
 }
@@ -337,6 +364,14 @@ void AUnknownCharacter::CrouchButtonPressed()
 	else
 	{
 		Crouch();
+	}
+}
+
+void AUnknownCharacter::ReloadButtonPressed()
+{
+	if (Combat)
+	{
+		Combat->Reload();
 	}
 }
 
@@ -630,4 +665,13 @@ FVector AUnknownCharacter::GetHitTarget() const
 		return FVector();
 	}
 	return Combat->HitTarget;
+}
+
+ECombatState AUnknownCharacter::GetCombatState() const
+{
+	if (Combat == nullptr)
+	{
+		return ECombatState::ECS_MAX;
+	}
+	return Combat->CombatState;
 }

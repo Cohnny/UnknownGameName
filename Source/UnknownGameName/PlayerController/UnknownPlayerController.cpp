@@ -80,3 +80,16 @@ void AUnknownPlayerController::SetHUDWeaponAmmo(int32 Ammo)
 		UnknownHUD->CharacterOverlay->WeaponAmmoAmount->SetText(FText::FromString(AmmoText));
 	}
 }
+
+void AUnknownPlayerController::SetHUDCarriedAmmo(int32 Ammo)
+{
+	UnknownHUD = UnknownHUD == nullptr ? Cast<AUnknownHUD>(GetHUD()) : UnknownHUD;
+	bool bHUDValid = UnknownHUD &&
+		UnknownHUD->CharacterOverlay &&
+		UnknownHUD->CharacterOverlay->CarriedAmmoAmount;
+	if (bHUDValid)
+	{
+		FString AmmoText = FString::Printf(TEXT("%d"), Ammo);
+		UnknownHUD->CharacterOverlay->CarriedAmmoAmount->SetText(FText::FromString(AmmoText));
+	}
+}
