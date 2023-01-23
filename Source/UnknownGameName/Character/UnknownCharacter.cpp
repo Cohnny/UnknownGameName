@@ -65,6 +65,7 @@ void AUnknownCharacter::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& Ou
 
 	DOREPLIFETIME_CONDITION(AUnknownCharacter, OverlappingWeapon,COND_OwnerOnly);
 	DOREPLIFETIME(AUnknownCharacter, Health);
+	DOREPLIFETIME(AUnknownCharacter, bDisableGameplay);
 }
 
 void AUnknownCharacter::OnRep_ReplicatedMovement()
@@ -98,6 +99,10 @@ void AUnknownCharacter::Destroyed()
 	{
 		ElimBotComponent->DestroyComponent();
 	}
+	if (Combat && Combat->EquippedWeapon)
+	{
+		Combat->EquippedWeapon->Destroy();
+	}
 }
 
 void AUnknownCharacter::MulticastElim_Implementation()
@@ -122,10 +127,7 @@ void AUnknownCharacter::MulticastElim_Implementation()
 	// Disable character movement
 	GetCharacterMovement()->DisableMovement();
 	GetCharacterMovement()->StopMovementImmediately();
-	if (UnknownPlayerController)
-	{
-		DisableInput(UnknownPlayerController);
-	}
+	bDisableGameplay = true;
 	// Disable collision
 	GetCapsuleComponent()->SetCollisionEnabled(ECollisionEnabled::NoCollision);
 	GetMesh()->SetCollisionEnabled(ECollisionEnabled::NoCollision);
@@ -175,6 +177,19 @@ void AUnknownCharacter::Tick(float DeltaTime)
 {
 	Super::Tick(DeltaTime);
 
+	RotateInPlace(DeltaTime);
+	HideCameraIfCharacterClose();
+	PollInit();
+}
+
+void AUnknownCharacter::RotateInPlace(float DeltaTime)
+{
+	if (bDisableGameplay)
+	{
+		bUseControllerRotationYaw = false;
+		TurningInPlace = ETurningInPlace::ETIP_NotTurning;
+		return;
+	}
 	if (GetLocalRole() > ENetRole::ROLE_SimulatedProxy && IsLocallyControlled())
 	{
 		AimOffset(DeltaTime);
@@ -188,9 +203,6 @@ void AUnknownCharacter::Tick(float DeltaTime)
 		}
 		CalculateAO_Pitch();
 	}
-
-	HideCameraIfCharacterClose();
-	PollInit();
 }
 
 void AUnknownCharacter::SetupPlayerInputComponent(UInputComponent* PlayerInputComponent)
@@ -312,6 +324,10 @@ void AUnknownCharacter::ReceiveDamage(AActor* DamagedActor, float Damage, const 
 
 void AUnknownCharacter::MoveForward(float Value)
 {
+	if (bDisableGameplay)
+	{
+		return;
+	}
 	if (Controller != nullptr && Value != 0.f)
 	{
 		const FRotator YawRotation(0.f, Controller->GetControlRotation().Yaw, 0.f);
@@ -322,6 +338,10 @@ void AUnknownCharacter::MoveForward(float Value)
 
 void AUnknownCharacter::MoveRight(float Value)
 {
+	if (bDisableGameplay)
+	{
+		return;
+	}
 	if (Controller != nullptr && Value != 0.f)
 	{
 		const FRotator YawRotation(0.f, Controller->GetControlRotation().Yaw, 0.f);
@@ -342,6 +362,10 @@ void AUnknownCharacter::LookUp(float Value)
 
 void AUnknownCharacter::EquipButtonPressed()
 {
+	if (bDisableGameplay)
+	{
+		return;
+	}
 	if (Combat)
 	{
 		if (HasAuthority())
@@ -357,6 +381,10 @@ void AUnknownCharacter::EquipButtonPressed()
 
 void AUnknownCharacter::CrouchButtonPressed()
 {
+	if (bDisableGameplay)
+	{
+		return;
+	}
 	if (bIsCrouched)
 	{
 		UnCrouch();
@@ -369,6 +397,10 @@ void AUnknownCharacter::CrouchButtonPressed()
 
 void AUnknownCharacter::ReloadButtonPressed()
 {
+	if (bDisableGameplay)
+	{
+		return;
+	}
 	if (Combat)
 	{
 		Combat->Reload();
@@ -377,6 +409,10 @@ void AUnknownCharacter::ReloadButtonPressed()
 
 void AUnknownCharacter::AimButtonPressed()
 {
+	if (bDisableGameplay)
+	{
+		return;
+	}
 	if (Combat)
 	{
 		Combat->SetAiming(true);
@@ -385,6 +421,10 @@ void AUnknownCharacter::AimButtonPressed()
 
 void AUnknownCharacter::AimButtonReleased()
 {
+	if (bDisableGameplay)
+	{
+		return;
+	}
 	if (Combat)
 	{
 		Combat->SetAiming(false);
@@ -486,6 +526,10 @@ void AUnknownCharacter::SimProxiesTurn()
 
 void AUnknownCharacter::Jump()
 {
+	if (bDisableGameplay)
+	{
+		return;
+	}
 	if (bIsCrouched)
 	{
 		UnCrouch();
@@ -498,6 +542,10 @@ void AUnknownCharacter::Jump()
 
 void AUnknownCharacter::FireButtonPressed()
 {
+	if (bDisableGameplay)
+	{
+		return;
+	}
 	if (Combat)
 	{
 		Combat->FireButtonPressed(true);
@@ -506,6 +554,10 @@ void AUnknownCharacter::FireButtonPressed()
 
 void AUnknownCharacter::FireButtonReleased()
 {
+	if (bDisableGameplay)
+	{
+		return;
+	}
 	if (Combat)
 	{
 		Combat->FireButtonPressed(false);

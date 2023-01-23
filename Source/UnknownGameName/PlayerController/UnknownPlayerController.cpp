@@ -7,12 +7,76 @@
 #include "Components/ProgressBar.h"
 #include "Components/TextBlock.h"
 #include "UnknownGameName/Character/UnknownCharacter.h"
+#include "Net/UnrealNetwork.h"
+#include "UnknownGameName/GameMode/UnknownGameMode.h"
+#include "UnknownGameName/PlayerState/UnknownPlayerState.h"
+#include "UnknownGameName/HUD/Announcement.h"
+#include "Kismet/GameplayStatics.h"
+#include "UnknownGameName/UnknownComponents/CombatComponent.h"
 
 void AUnknownPlayerController::BeginPlay()
 {
 	Super::BeginPlay();
 
+	ServerCheckMatchState();
+
 	UnknownHUD = Cast<AUnknownHUD>(GetHUD());
+	ServerCheckMatchState();
+}
+
+void AUnknownPlayerController::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const
+{
+	Super::GetLifetimeReplicatedProps(OutLifetimeProps);
+
+	DOREPLIFETIME(AUnknownPlayerController, MatchState);
+}
+
+
+void AUnknownPlayerController::Tick(float DeltaTime)
+{
+	Super::Tick(DeltaTime);
+
+	SetHUDTime();
+	CheckTimeSync(DeltaTime);
+	PollInit();
+}
+
+void AUnknownPlayerController::CheckTimeSync(float DeltaTime)
+{
+	TimeSyncRunningTime += DeltaTime;
+	if (IsLocalController() && TimeSyncRunningTime > TimeSyncFrequency)
+	{
+		ServerRequestServerTime(GetWorld()->GetTimeSeconds());
+		TimeSyncRunningTime = 0.f;
+	}
+}
+
+void AUnknownPlayerController::ServerCheckMatchState_Implementation()
+{
+	AUnknownGameMode* GameMode = Cast<AUnknownGameMode>(UGameplayStatics::GetGameMode(this));
+	if (GameMode)
+	{
+		WarmupTime = GameMode->WarmupTime;
+		MatchTime = GameMode->MatchTime;
+		CooldownTime = GameMode->CooldownTime;
+		LevelStartingTime = GameMode->LevelStartingTime;
+		MatchState = GameMode->GetMatchState();
+		ClientJoinMidgame(MatchState, WarmupTime, MatchTime, CooldownTime, LevelStartingTime);
+	}
+}
+
+void AUnknownPlayerController::ClientJoinMidgame_Implementation(FName StateOfMatch, float Warmup, float Match, float Cooldown, float StartingTime)
+{
+	WarmupTime = Warmup;
+	MatchTime = Match;
+	CooldownTime = Cooldown;
+	LevelStartingTime = StartingTime;
+	MatchState = StateOfMatch;
+	OnMatchStateSet(MatchState);
+	if (UnknownHUD && MatchState == MatchState::WaitingToStart)
+	{
+		UnknownHUD->AddAnnouncement();
+	}
 }
 
 void AUnknownPlayerController::OnPossess(APawn* InPawn)
@@ -40,6 +104,12 @@ void AUnknownPlayerController::SetHUDHealth(float Health, float MaxHealth)
 		FString HealthText = FString::Printf(TEXT("%d/%d"), FMath::CeilToInt(Health), FMath::CeilToInt(MaxHealth));
 		UnknownHUD->CharacterOverlay->HealthText->SetText(FText::FromString(HealthText));
 	}
+	else
+	{
+		bInitializeCharacterOverlay = true;
+		HUDHealth = Health;
+		HUDMaxHealth = MaxHealth;
+	}
 }
 
 void AUnknownPlayerController::SetHUDScore(float Score)
@@ -53,6 +123,11 @@ void AUnknownPlayerController::SetHUDScore(float Score)
 		FString ScoreText = FString::Printf(TEXT("%d"), FMath::FloorToInt(Score));
 		UnknownHUD->CharacterOverlay->ScoreAmount->SetText(FText::FromString(ScoreText));
 	}
+	else
+	{
+		bInitializeCharacterOverlay = true;
+		HUDScore = Score;
+	}
 }
 
 void AUnknownPlayerController::SetHUDDefeats(int32 Defeats)
@@ -65,6 +140,11 @@ void AUnknownPlayerController::SetHUDDefeats(int32 Defeats)
 	{
 		FString DefeatsText = FString::Printf(TEXT("%d"), Defeats);
 		UnknownHUD->CharacterOverlay->DefeatsAmount->SetText(FText::FromString(DefeatsText));
+	}
+	else
+	{
+		bInitializeCharacterOverlay = true;
+		HUDDefeats = Defeats;
 	}
 }
 
@@ -91,5 +171,212 @@ void AUnknownPlayerController::SetHUDCarriedAmmo(int32 Ammo)
 	{
 		FString AmmoText = FString::Printf(TEXT("%d"), Ammo);
 		UnknownHUD->CharacterOverlay->CarriedAmmoAmount->SetText(FText::FromString(AmmoText));
+	}
+}
+
+void AUnknownPlayerController::SetHUDMatchCountdown(float CountdownTime)
+{
+	UnknownHUD = UnknownHUD == nullptr ? Cast<AUnknownHUD>(GetHUD()) : UnknownHUD;
+	bool bHUDValid = UnknownHUD &&
+		UnknownHUD->CharacterOverlay &&
+		UnknownHUD->CharacterOverlay->MatchCountdownText;
+	if (bHUDValid)
+	{
+		if (CountdownTime < 0.f)
+		{
+			UnknownHUD->CharacterOverlay->MatchCountdownText->SetText(FText());
+			return;
+		}
+
+		int32 Minutes = FMath::FloorToInt(CountdownTime / 60.f);
+		int32 Seconds = CountdownTime - Minutes * 60;
+
+		FString CountdownText = FString::Printf(TEXT("%02d:%02d"), Minutes, Seconds);
+		UnknownHUD->CharacterOverlay->MatchCountdownText->SetText(FText::FromString(CountdownText));
+	}
+}
+
+void AUnknownPlayerController::SetHUDAnnouncementCountdown(float CountdownTime)
+{
+	UnknownHUD = UnknownHUD == nullptr ? Cast<AUnknownHUD>(GetHUD()) : UnknownHUD;
+	bool bHUDValid = UnknownHUD &&
+		UnknownHUD->Announcement &&
+		UnknownHUD->Announcement->WarmupTime;
+	if (bHUDValid)
+	{
+		if (CountdownTime < 0.f)
+		{
+			UnknownHUD->Announcement->WarmupTime->SetText(FText());
+			return;
+		}
+
+		int32 Minutes = FMath::FloorToInt(CountdownTime / 60.f);
+		int32 Seconds = CountdownTime - Minutes * 60;
+
+		FString CountdownText = FString::Printf(TEXT("%02d:%02d"), Minutes, Seconds);
+		UnknownHUD->Announcement->WarmupTime->SetText(FText::FromString(CountdownText));
+	}
+}
+
+void AUnknownPlayerController::SetHUDTime()
+{
+	float TimeLeft = 0.f;
+	if (MatchState == MatchState::WaitingToStart)
+	{
+		TimeLeft = WarmupTime - GetServerTime() + LevelStartingTime;
+	}
+	else if (MatchState == MatchState::InProgress)
+	{
+		TimeLeft = WarmupTime + MatchTime - GetServerTime() + LevelStartingTime;
+	}
+	else if (MatchState == MatchState::Cooldown)
+	{
+		TimeLeft = CooldownTime + WarmupTime + MatchTime - GetServerTime() + LevelStartingTime;
+	}
+
+	uint32 SecondsLeft = FMath::CeilToInt(TimeLeft);
+
+	if (HasAuthority())
+	{
+		UnknownGameMode = UnknownGameMode == nullptr ? Cast<AUnknownGameMode>(UGameplayStatics::GetGameMode(this)) : UnknownGameMode;
+		if (UnknownGameMode)
+		{
+			SecondsLeft = FMath::CeilToInt(UnknownGameMode->GetCountdownTime() + LevelStartingTime);
+		}
+	}
+
+	if (CountdownInt != SecondsLeft)
+	{
+		if (MatchState == MatchState::WaitingToStart || MatchState == MatchState::Cooldown)
+		{
+			SetHUDAnnouncementCountdown(TimeLeft);
+		}
+		if (MatchState == MatchState::InProgress)
+		{
+			SetHUDMatchCountdown(TimeLeft);
+		}
+	}
+
+	CountdownInt = SecondsLeft;
+}
+
+void AUnknownPlayerController::PollInit()
+{
+	if (CharacterOverlay == nullptr)
+	{
+		if (UnknownHUD && UnknownHUD->CharacterOverlay)
+		{
+			CharacterOverlay = UnknownHUD->CharacterOverlay;
+			if (CharacterOverlay)
+			{
+				SetHUDHealth(HUDHealth, HUDMaxHealth);
+				SetHUDScore(HUDScore);
+				SetHUDDefeats(HUDDefeats);
+			}
+		}
+	}
+}
+
+void AUnknownPlayerController::ServerRequestServerTime_Implementation(float TimeOfClientRequest)
+{
+	float ServerTimeOfReceipt = GetWorld()->GetTimeSeconds();
+	ClientReportServerTime(TimeOfClientRequest, ServerTimeOfReceipt);
+}
+
+void AUnknownPlayerController::ClientReportServerTime_Implementation(float TimeOfClientRequest, float TimeServerReceivedClientRequest)
+{
+	float RoundTripTime = GetWorld()->GetTimeSeconds() - TimeOfClientRequest;
+	float CurrentServerTime = TimeServerReceivedClientRequest + (0.5f * RoundTripTime);
+	ClientServerDelta = CurrentServerTime - GetWorld()->GetTimeSeconds();
+}
+
+float AUnknownPlayerController::GetServerTime()
+{
+	if (HasAuthority())
+	{
+		return GetWorld()->GetTimeSeconds();
+	}
+	else
+	{
+		return GetWorld()->GetTimeSeconds() + ClientServerDelta;
+	}
+}
+
+void AUnknownPlayerController::ReceivedPlayer()
+{
+	Super::ReceivedPlayer();
+
+	if (IsLocalController())
+	{
+		ServerRequestServerTime(GetWorld()->GetTimeSeconds());
+	}
+}
+
+void AUnknownPlayerController::OnMatchStateSet(FName State)
+{
+	MatchState = State;
+
+	/*if (MatchState == MatchState::WaitingToStart)
+	{
+
+	}*/
+
+	if (MatchState == MatchState::InProgress)
+	{
+		HandleMatchHasStarted();
+	}
+	else if (MatchState == MatchState::Cooldown)
+	{
+		HandleCooldown();
+	}
+}
+
+void AUnknownPlayerController::OnRep_MatchState()
+{
+	if (MatchState == MatchState::InProgress)
+	{
+		HandleMatchHasStarted();
+	}
+	else if (MatchState == MatchState::Cooldown)
+	{
+		HandleCooldown();
+	}
+}
+
+void AUnknownPlayerController::HandleMatchHasStarted()
+{
+	UnknownHUD = UnknownHUD == nullptr ? Cast<AUnknownHUD>(GetHUD()) : UnknownHUD;
+	if (UnknownHUD)
+	{
+		UnknownHUD->AddCharacterOverlay();
+		if (UnknownHUD->Announcement)
+		{
+			UnknownHUD->Announcement->SetVisibility(ESlateVisibility::Hidden);
+		}
+	}
+}
+
+void AUnknownPlayerController::HandleCooldown()
+{
+	UnknownHUD = UnknownHUD == nullptr ? Cast<AUnknownHUD>(GetHUD()) : UnknownHUD;
+	if (UnknownHUD)
+	{
+		UnknownHUD->CharacterOverlay->RemoveFromParent();
+		bool bHUDValid = UnknownHUD->Announcement &&
+			UnknownHUD->Announcement->AnnouncementText &&
+			UnknownHUD->Announcement->InfoText;
+		if (bHUDValid)
+		{
+			UnknownHUD->Announcement->SetVisibility(ESlateVisibility::Visible);
+			FString AnnouncementText("New match starts in:");
+			UnknownHUD->Announcement->AnnouncementText->SetText(FText::FromString(AnnouncementText));
+			UnknownHUD->Announcement->InfoText->SetText(FText());
+		}
+	}
+	AUnknownCharacter* UnknownCharacter = Cast<AUnknownCharacter>(GetPawn());
+	if (UnknownCharacter && UnknownCharacter->GetCombat())
+	{
+		UnknownCharacter->bDisableGameplay = true;
+		UnknownCharacter->GetCombat()->FireButtonPressed(false);
 	}
 }

@@ -13,5 +13,13 @@ UCLASS()
 class UNKNOWNGAMENAME_API UAnnouncement : public UUserWidget
 {
 	GENERATED_BODY()
-	
+public:
+	UPROPERTY(meta = (BindWidget))
+	class UTextBlock* WarmupTime;
+
+	UPROPERTY(meta = (BindWidget))
+	UTextBlock* AnnouncementText;
+
+	UPROPERTY(meta = (BindWidget))
+	UTextBlock* InfoText;
 };
