@@ -13,5 +13,15 @@ UCLASS()
 class UNKNOWNGAMENAME_API AUnknownGameState : public AGameState
 {
 	GENERATED_BODY()
-	
+public:
+
+	virtual void GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const override;
+	void UpdateTopScore(class AUnknownPlayerState* ScoringPlayer);
+
+	UPROPERTY(Replicated)
+	TArray<AUnknownPlayerState*> TopScoringPlayers;
+
+private:
+
+	float TopScore = 0.f;
 };

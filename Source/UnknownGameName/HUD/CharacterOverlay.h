@@ -35,4 +35,11 @@ public:
 
 	UPROPERTY(meta = (BindWidget))
 	UTextBlock* MatchCountdownText;
+
+	// Weapon name of currently equipped weapon.
+	UPROPERTY(meta = (BindWidget))
+	UTextBlock* WeaponTypeText;
+
+	UPROPERTY(meta = (BindWidget))
+	UTextBlock* ElimText;
 };

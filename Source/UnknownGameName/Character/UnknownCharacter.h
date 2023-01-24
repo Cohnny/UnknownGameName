@@ -25,9 +25,9 @@ public:
 	void PlayReloadMontage();
 	void PlayElimMontage();
 	virtual void OnRep_ReplicatedMovement() override;
-	void Elim();
+	void Elim(APlayerController* AttackerController);
 	UFUNCTION(NetMulticast, Reliable)
-	void MulticastElim();
+	void MulticastElim(const FString& AttackerName);
 	virtual void Destroyed() override;
 
 	UPROPERTY(Replicated)

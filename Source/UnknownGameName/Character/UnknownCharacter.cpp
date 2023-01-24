@@ -76,13 +76,25 @@ void AUnknownCharacter::OnRep_ReplicatedMovement()
 	TimeSinceLastMovementReplication = 0.f;
 }
 
-void AUnknownCharacter::Elim()
+void AUnknownCharacter::Elim(APlayerController* AttackerController)
 {
+	FString AttackerName = FString();
+	AUnknownPlayerController* AttackerUnknownController = Cast<AUnknownPlayerController>(AttackerController);
+	if (AttackerUnknownController)
+	{
+		AUnknownPlayerState* AttackerUnknownPlayerState = Cast<AUnknownPlayerState>(AttackerUnknownController->PlayerState);
+		if (AttackerUnknownPlayerState)
+		{
+			AttackerName = AttackerUnknownPlayerState->GetPlayerName();
+		}
+	}
+	MulticastElim(AttackerName);
+
 	if (Combat && Combat->EquippedWeapon)
 	{
 		Combat->EquippedWeapon->Dropped();
 	}
-	MulticastElim();
+	MulticastElim(AttackerName);
 	GetWorldTimerManager().SetTimer(
 		ElimTimer,
 		this,
@@ -99,17 +111,25 @@ void AUnknownCharacter::Destroyed()
 	{
 		ElimBotComponent->DestroyComponent();
 	}
-	if (Combat && Combat->EquippedWeapon)
+
+	AUnknownGameMode* UnknownGameMode = Cast<AUnknownGameMode>(UGameplayStatics::GetGameMode(this));
+	bool bMatchNotInProgress = UnknownGameMode && UnknownGameMode->GetMatchState() != MatchState::InProgress;
+
+	if (Combat && Combat->EquippedWeapon && bMatchNotInProgress)
 	{
 		Combat->EquippedWeapon->Destroy();
 	}
 }
 
-void AUnknownCharacter::MulticastElim_Implementation()
+void AUnknownCharacter::MulticastElim_Implementation(const FString& AttackerName)
 {
 	if (UnknownPlayerController)
 	{
+		DisableInput(UnknownPlayerController);
+		UnknownPlayerController->SetElimText(AttackerName);
+
 		UnknownPlayerController->SetHUDWeaponAmmo(0);
+		UnknownPlayerController->SetHUDWeaponType(FText::FromString(""));
 	}
 	bElimmed = true;
 	PlayElimMontage();
@@ -128,6 +148,10 @@ void AUnknownCharacter::MulticastElim_Implementation()
 	GetCharacterMovement()->DisableMovement();
 	GetCharacterMovement()->StopMovementImmediately();
 	bDisableGameplay = true;
+	if (Combat)
+	{
+		Combat->FireButtonPressed(false);
+	}
 	// Disable collision
 	GetCapsuleComponent()->SetCollisionEnabled(ECollisionEnabled::NoCollision);
 	GetMesh()->SetCollisionEnabled(ECollisionEnabled::NoCollision);
@@ -159,6 +183,10 @@ void AUnknownCharacter::ElimTimerFinished()
 	if (UnknownGameMode)
 	{
 		UnknownGameMode->RequestRespawn(this, Controller);
+		if (AUnknownPlayerController* UnknownController = Cast<AUnknownPlayerController>(Controller))
+		{
+			UnknownController->ClearElimText();
+		}
 	}
 }
 
@@ -170,6 +198,10 @@ void AUnknownCharacter::BeginPlay()
 	if (HasAuthority())
 	{
 		OnTakeAnyDamage.AddDynamic(this, &AUnknownCharacter::ReceiveDamage);
+	}
+	if (AUnknownPlayerController* UnknownController = Cast<AUnknownPlayerController>(Controller))
+	{
+		UnknownController->ClearElimText();
 	}
 }
 

@@ -134,7 +134,7 @@ private:
 	class AUnknownPlayerController* UnknownOwnerController;
 
 	UPROPERTY(EditAnywhere)
-		EWeaponType WeaponType;
+	EWeaponType WeaponType;
 
 public:
 	void SetWeaponState(EWeaponState State);

@@ -27,6 +27,8 @@ public:
 
 	void FireButtonPressed(bool bPressed);
 
+	FText GetWeaponTypeDisplayNameText() const;
+
 protected:
 	virtual void BeginPlay() override;
 	void SetAiming(bool bIsAiming);

@@ -13,6 +13,7 @@
 #include "UnknownGameName/HUD/Announcement.h"
 #include "Kismet/GameplayStatics.h"
 #include "UnknownGameName/UnknownComponents/CombatComponent.h"
+#include "UnknownGameName/GameState/UnknownGameState.h"
 
 void AUnknownPlayerController::BeginPlay()
 {
@@ -148,6 +149,18 @@ void AUnknownPlayerController::SetHUDDefeats(int32 Defeats)
 	}
 }
 
+void AUnknownPlayerController::SetHUDWeaponType(FText WeaponType)
+{
+	UnknownHUD = UnknownHUD == nullptr ? Cast<AUnknownHUD>(GetHUD()) : UnknownHUD;
+	bool bHUDValid = UnknownHUD &&
+		UnknownHUD->CharacterOverlay &&
+		UnknownHUD->CharacterOverlay->WeaponTypeText;
+	if (bHUDValid)
+	{
+		UnknownHUD->CharacterOverlay->WeaponTypeText->SetText(WeaponType);
+	}
+}
+
 void AUnknownPlayerController::SetHUDWeaponAmmo(int32 Ammo)
 {
 	UnknownHUD = UnknownHUD == nullptr ? Cast<AUnknownHUD>(GetHUD()) : UnknownHUD;
@@ -191,8 +204,35 @@ void AUnknownPlayerController::SetHUDMatchCountdown(float CountdownTime)
 		int32 Minutes = FMath::FloorToInt(CountdownTime / 60.f);
 		int32 Seconds = CountdownTime - Minutes * 60;
 
-		FString CountdownText = FString::Printf(TEXT("%02d:%02d"), Minutes, Seconds);
-		UnknownHUD->CharacterOverlay->MatchCountdownText->SetText(FText::FromString(CountdownText));
+		bool bLastThirtySeconds = Minutes == FMath::FloorToInt(0.f) && Seconds <= FMath::FloorToInt(30.f);
+		if (bLastThirtySeconds)
+		{
+			FString CountdownText = FString::Printf(TEXT("%02d:%02d"), Minutes, Seconds);
+
+			FTimerHandle TimerHandle;
+
+			FSlateColor RedColor = FSlateColor(FLinearColor::Red);
+
+			UnknownHUD->CharacterOverlay->MatchCountdownText->SetColorAndOpacity(RedColor);
+			UnknownHUD->CharacterOverlay->MatchCountdownText->SetText(FText::FromString(CountdownText));
+
+			GetWorld()->GetTimerManager().SetTimer(TimerHandle, [&]()
+				{
+					UnknownHUD->CharacterOverlay->MatchCountdownText->SetVisibility(ESlateVisibility::Hidden);
+				}, .5f, false);
+			UnknownHUD->CharacterOverlay->MatchCountdownText->SetVisibility(ESlateVisibility::Visible);
+
+		}
+		else
+		{
+			FString CountdownText = FString::Printf(TEXT("%02d:%02d"), Minutes, Seconds);
+
+			FSlateColor WhiteColor = FSlateColor(FLinearColor::White);
+
+			UnknownHUD->CharacterOverlay->MatchCountdownText->SetColorAndOpacity(WhiteColor);
+
+			UnknownHUD->CharacterOverlay->MatchCountdownText->SetText(FText::FromString(CountdownText));
+		}
 	}
 }
 
@@ -370,7 +410,36 @@ void AUnknownPlayerController::HandleCooldown()
 			UnknownHUD->Announcement->SetVisibility(ESlateVisibility::Visible);
 			FString AnnouncementText("New match starts in:");
 			UnknownHUD->Announcement->AnnouncementText->SetText(FText::FromString(AnnouncementText));
-			UnknownHUD->Announcement->InfoText->SetText(FText());
+			
+			AUnknownGameState* UnknownGameState = Cast<AUnknownGameState>(UGameplayStatics::GetGameState(this));
+			AUnknownPlayerState* UnknownPlayerState = GetPlayerState<AUnknownPlayerState>();
+			if (UnknownGameState && UnknownPlayerState)
+			{
+				TArray<AUnknownPlayerState*> TopPlayers = UnknownGameState->TopScoringPlayers;
+				FString InfoTextString;
+				if (TopPlayers.Num() == 0)
+				{
+					InfoTextString = FString("NO ONE WON.");
+				}
+				else if (TopPlayers.Num() == 1 && TopPlayers[0] == UnknownPlayerState)
+				{
+					InfoTextString = FString("YOU WON THE MATCH!");
+				}
+				else if (TopPlayers.Num() == 1)
+				{
+					InfoTextString = FString::Printf(TEXT("Winner: \n%s"), *TopPlayers[0]->GetPlayerName());
+				}
+				else if (TopPlayers.Num() > 1)
+				{
+					InfoTextString = FString("PLAYERS TIED FOR THE MATCH:\n");
+					for (auto TiedPlayer : TopPlayers)
+					{
+						InfoTextString.Append(FString::Printf(TEXT("%s\n"), *TiedPlayer->GetPlayerName()));
+					}
+				}
+
+				UnknownHUD->Announcement->InfoText->SetText(FText::FromString(InfoTextString));
+			}
 		}
 	}
 	AUnknownCharacter* UnknownCharacter = Cast<AUnknownCharacter>(GetPawn());
@@ -378,5 +447,40 @@ void AUnknownPlayerController::HandleCooldown()
 	{
 		UnknownCharacter->bDisableGameplay = true;
 		UnknownCharacter->GetCombat()->FireButtonPressed(false);
+	}
+}
+
+void AUnknownPlayerController::SetElimText(FString InText)
+{
+	UnknownHUD = UnknownHUD == nullptr ? Cast<AUnknownHUD>(GetHUD()) : UnknownHUD;
+	bool bHUDValid = UnknownHUD &&
+		UnknownHUD->CharacterOverlay &&
+		UnknownHUD->CharacterOverlay->ElimText;
+	if (bHUDValid)
+	{
+		if (InText.IsEmpty())
+		{
+			FString TextToDisplay = FString::Printf(TEXT("You killed yourself"));
+			UnknownHUD->CharacterOverlay->ElimText->SetText(FText::FromString(TextToDisplay));
+		}
+		else
+		{
+			FString TextToDisplay = FString::Printf(TEXT("You were killed by \r %s"), *InText);
+			UnknownHUD->CharacterOverlay->ElimText->SetText(FText::FromString(TextToDisplay));
+		}
+		UnknownHUD->CharacterOverlay->ElimText->SetVisibility(ESlateVisibility::SelfHitTestInvisible);
+	}
+}
+
+void AUnknownPlayerController::ClearElimText()
+{
+	UnknownHUD = UnknownHUD == nullptr ? Cast<AUnknownHUD>(GetHUD()) : UnknownHUD;
+	bool bHUDValid = UnknownHUD &&
+		UnknownHUD->CharacterOverlay &&
+		UnknownHUD->CharacterOverlay->ElimText;
+	if (bHUDValid)
+	{
+		UnknownHUD->CharacterOverlay->ElimText->SetText(FText());
+		UnknownHUD->CharacterOverlay->ElimText->SetVisibility(ESlateVisibility::Collapsed);
 	}
 }

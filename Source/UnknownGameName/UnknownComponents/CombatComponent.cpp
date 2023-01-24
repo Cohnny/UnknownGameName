@@ -77,6 +77,17 @@ void UCombatComponent::FireButtonPressed(bool bPressed)
 	}
 }
 
+FText UCombatComponent::GetWeaponTypeDisplayNameText() const
+{
+	if (EquippedWeapon == nullptr)
+	{
+		return FText::FromString("");
+	}
+
+	FText WeaponTypeText = StaticEnum<EWeaponType>()->GetDisplayNameTextByIndex(static_cast<int32>(EquippedWeapon->GetWeaponType()));
+	return WeaponTypeText;
+}
+
 void UCombatComponent::Fire()
 {
 	if (CanFire())
@@ -172,6 +183,7 @@ void UCombatComponent::EquipWeapon(AWeapon* WeaponToEquip)
 	if (Controller)
 	{
 		Controller->SetHUDCarriedAmmo(CarriedAmmo);
+		Controller->SetHUDWeaponType(GetWeaponTypeDisplayNameText());
 	}
 
 	if (EquippedWeapon->EquipSound)
@@ -308,6 +320,11 @@ void UCombatComponent::OnRep_EquippedWeapon()
 				EquippedWeapon->EquipSound,
 				Character->GetActorLocation()
 			);
+		}
+
+		if (Controller)
+		{
+			Controller->SetHUDWeaponType(GetWeaponTypeDisplayNameText());
 		}
 	}
 }

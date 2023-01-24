@@ -7,6 +7,7 @@
 #include "Kismet/GameplayStatics.h"
 #include "GameFramework/PlayerStart.h"
 #include "UnknownGameName/PlayerState/UnknownPlayerState.h"
+#include "UnknownGameName/GameState/UnknownGameState.h"
 
 namespace MatchState
 {
@@ -74,9 +75,12 @@ void AUnknownGameMode::PlayerEliminated(AUnknownCharacter* ElimmedCharacter, AUn
 	AUnknownPlayerState* AttackerPlayerState = AttackerController ? Cast<AUnknownPlayerState>(AttackerController->PlayerState) : nullptr;
 	AUnknownPlayerState* VictimPlayerState = VictimController ? Cast<AUnknownPlayerState>(VictimController->PlayerState) : nullptr;
 
-	if (AttackerPlayerState && AttackerPlayerState != VictimPlayerState)
+	AUnknownGameState* UnknownGameState = GetGameState<AUnknownGameState>();
+
+	if (AttackerPlayerState && AttackerPlayerState != VictimPlayerState && UnknownGameState)
 	{
 		AttackerPlayerState->AddToScore(1.0f);
+		UnknownGameState->UpdateTopScore(AttackerPlayerState);
 	}
 
 	if (VictimPlayerState)
@@ -86,7 +90,7 @@ void AUnknownGameMode::PlayerEliminated(AUnknownCharacter* ElimmedCharacter, AUn
 
 	if (ElimmedCharacter)
 	{
-		ElimmedCharacter->Elim();
+		ElimmedCharacter->Elim(AttackerController);
 	}
 }
 
