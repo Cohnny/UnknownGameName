@@ -145,9 +145,9 @@ void AUnknownCharacter::MulticastElim_Implementation(const FString& AttackerName
 	StartDissolve();
 
 	// Disable character movement
+	bDisableGameplay = true;
 	GetCharacterMovement()->DisableMovement();
 	GetCharacterMovement()->StopMovementImmediately();
-	bDisableGameplay = true;
 	if (Combat)
 	{
 		Combat->FireButtonPressed(false);

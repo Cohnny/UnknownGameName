@@ -388,7 +388,10 @@ void AUnknownPlayerController::HandleMatchHasStarted()
 	UnknownHUD = UnknownHUD == nullptr ? Cast<AUnknownHUD>(GetHUD()) : UnknownHUD;
 	if (UnknownHUD)
 	{
-		UnknownHUD->AddCharacterOverlay();
+		if (UnknownHUD->CharacterOverlay == nullptr)
+		{
+			UnknownHUD->AddCharacterOverlay();
+		}
 		if (UnknownHUD->Announcement)
 		{
 			UnknownHUD->Announcement->SetVisibility(ESlateVisibility::Hidden);
