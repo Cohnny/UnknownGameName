@@ -24,7 +24,7 @@ void AUnknownHUD::AddCharacterOverlay()
 void AUnknownHUD::AddAnnouncement()
 {
 	APlayerController* PlayerController = GetOwningPlayerController();
-	if (PlayerController && AnnouncementClass)
+	if (PlayerController && AnnouncementClass && Announcement == nullptr)
 	{
 		Announcement = CreateWidget<UAnnouncement>(PlayerController, AnnouncementClass);
 		Announcement->AddToViewport();

@@ -13,27 +13,17 @@ void UOverheadWidget::SetDisplayText(FString TextToDisplay)
 	}
 }
 
-void UOverheadWidget::ShowPlayerNetRole(APawn* InPawn)
+void UOverheadWidget::ShowPlayerName(APawn* InPawn)
 {
-	ENetRole RemoveRole = InPawn->GetRemoteRole();
-	FString Role;
-	switch (RemoveRole)
+	APlayerState* UnknownPlayerState = InPawn->GetPlayerState();
+	if (!ensure(UnknownPlayerState != nullptr))
 	{
-	case ENetRole::ROLE_Authority:
-		Role = FString("Authority");
-		break;
-	case ENetRole::ROLE_AutonomousProxy:
-		Role = FString("Autonomous Provy");
-		break;
-	case ENetRole::ROLE_SimulatedProxy:
-		Role = FString("Simulated Proxy");
-		break;
-	case ENetRole::ROLE_None:
-		Role = FString("None");
-		break;
+		return;
 	}
-	FString RemoteRoleString = FString::Printf(TEXT("Remote Role: %s"), *Role);
-	SetDisplayText(RemoteRoleString);
+
+	FString PlayerName = UnknownPlayerState->GetPlayerName();
+	FString DisplayName = FString::Printf(TEXT("%s"), *PlayerName);
+	SetDisplayText(DisplayName);
 }
 
 void UOverheadWidget::NativeDestruct()

@@ -21,7 +21,7 @@ public:
 	void SetDisplayText(FString TextToDisplay);
 
 	UFUNCTION(BlueprintCallable)
-	void ShowPlayerNetRole(APawn* InPawn);
+	void ShowPlayerName(APawn* InPawn);
 
 protected:
 	virtual void NativeDestruct() override;
