@@ -717,10 +717,13 @@ void AUnknownCharacter::ServerEquipButtonPressed_Implementation()
 	}
 }
 
-void AUnknownCharacter::OnRep_Health()
+void AUnknownCharacter::OnRep_Health(float LastHealth)
 {
 	UpdateHUDHealth();
-	PlayHitReactMontage();
+	if (Health < LastHealth)
+	{
+		PlayHitReactMontage();
+	}
 }
 
 void AUnknownCharacter::UpdateHUDHealth()

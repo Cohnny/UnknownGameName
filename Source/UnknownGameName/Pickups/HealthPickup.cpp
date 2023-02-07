@@ -19,7 +19,11 @@ void AHealthPickup::OnSphereOverlap(UPrimitiveComponent* OverlappedComponent, AA
 	AUnknownCharacter* UnknownCharacter = Cast<AUnknownCharacter>(OtherActor);
 	if (UnknownCharacter)
 	{
-		
+		UBuffComponent* Buff = UnknownCharacter->GetBuff();
+		if (Buff)
+		{
+			Buff->Heal(HealAmount, HealingTime);
+		}
 	}
 	Destroy();
 }
