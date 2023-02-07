@@ -9,6 +9,7 @@
 #include "Net/UnrealNetwork.h"
 #include "UnknownGameName/Weapon/Weapon.h"
 #include "UnknownGameName/UnknownComponents/CombatComponent.h"
+#include "UnknownGameName/UnknownComponents/BuffComponent.h"
 #include "Components/CapsuleComponent.h"
 #include "Kismet/KismetMathLibrary.h"
 #include "UnknownAnimInstance.h"
@@ -43,6 +44,9 @@ AUnknownCharacter::AUnknownCharacter()
 
 	Combat = CreateDefaultSubobject<UCombatComponent>(TEXT("CombatComponent"));
 	Combat->SetIsReplicated(true);
+
+	Buff = CreateDefaultSubobject<UBuffComponent>(TEXT("BuffComponent"));
+	Buff->SetIsReplicated(true);
 
 	GetCharacterMovement()->NavAgentProps.bCanCrouch = true;
 	GetCapsuleComponent()->SetCollisionResponseToChannel(ECollisionChannel::ECC_Camera, ECollisionResponse::ECR_Ignore);
@@ -286,6 +290,10 @@ void AUnknownCharacter::PostInitializeComponents()
 	{
 		Combat->Character = this;
 	}
+	if (Buff)
+	{
+		Buff->Character = this;
+	}
 }
 
 void AUnknownCharacter::PlayFireMontage(bool bAiming)
@@ -391,6 +399,10 @@ void AUnknownCharacter::GrenadeButtonPressed()
 
 void AUnknownCharacter::ReceiveDamage(AActor* DamagedActor, float Damage, const UDamageType* DamageType, AController* InstigatorController, AActor* DamageCauser)
 {
+	if (bElimmed)
+	{
+		return;
+	}
 	Health = FMath::Clamp(Health - Damage, 0.f, MaxHealth);
 	UpdateHUDHealth();
 	PlayHitReactMontage();

@@ -42,4 +42,7 @@ public:
 
 	UPROPERTY(meta = (BindWidget))
 	UTextBlock* ElimText;
+
+	UPROPERTY(meta = (BindWidget))
+	UTextBlock* GrenadesText;
 };

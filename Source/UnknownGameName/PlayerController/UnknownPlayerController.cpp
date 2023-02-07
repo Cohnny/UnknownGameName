@@ -258,6 +258,23 @@ void AUnknownPlayerController::SetHUDAnnouncementCountdown(float CountdownTime)
 	}
 }
 
+void AUnknownPlayerController::SetHUDGrenades(int32 Grenades)
+{
+	UnknownHUD = UnknownHUD == nullptr ? Cast<AUnknownHUD>(GetHUD()) : UnknownHUD;
+	bool bHUDValid = UnknownHUD &&
+		UnknownHUD->CharacterOverlay &&
+		UnknownHUD->CharacterOverlay->GrenadesText;
+	if (bHUDValid)
+	{
+		FString GrenadesText = FString::Printf(TEXT("%d"), Grenades);
+		UnknownHUD->CharacterOverlay->GrenadesText->SetText(FText::FromString(GrenadesText));
+	}
+	else
+	{
+		HUDGrenades = Grenades;
+	}
+}
+
 void AUnknownPlayerController::SetHUDTime()
 {
 	float TimeLeft = 0.f;
@@ -312,6 +329,11 @@ void AUnknownPlayerController::PollInit()
 				SetHUDHealth(HUDHealth, HUDMaxHealth);
 				SetHUDScore(HUDScore);
 				SetHUDDefeats(HUDDefeats);
+				AUnknownCharacter* UnknownCharacter = Cast<AUnknownCharacter>(GetPawn());
+				if (UnknownCharacter && UnknownCharacter->GetCombat())
+				{
+					SetHUDGrenades(UnknownCharacter->GetCombat()->GetGrenades());
+				}
 			}
 		}
 	}
