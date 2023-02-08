@@ -1,13 +1,8 @@
-#include "HealthPickup.h"
+#include "JumpPickup.h"
 #include "UnknownGameName/Character/UnknownCharacter.h"
 #include "UnknownGameName/UnknownComponents/BuffComponent.h"
 
-AHealthPickup::AHealthPickup()
-{
-	bReplicates = true;
-}
-
-void AHealthPickup::OnSphereOverlap(UPrimitiveComponent* OverlappedComponent, AActor* OtherActor, UPrimitiveComponent* OtherComp, int32 OtherBodyIndex, bool bFromSweep, const FHitResult& SweepResult)
+void AJumpPickup::OnSphereOverlap(UPrimitiveComponent* OverlappedComponent, AActor* OtherActor, UPrimitiveComponent* OtherComp, int32 OtherBodyIndex, bool bFromSweep, const FHitResult& SweepResult)
 {
 	Super::OnSphereOverlap(OverlappedComponent, OtherActor, OtherComp, OtherBodyIndex, bFromSweep, SweepResult);
 
@@ -17,7 +12,7 @@ void AHealthPickup::OnSphereOverlap(UPrimitiveComponent* OverlappedComponent, AA
 		UBuffComponent* Buff = UnknownCharacter->GetBuff();
 		if (Buff)
 		{
-			Buff->Heal(HealAmount, HealingTime);
+			Buff->BuffJump(JumpZVelocityBuff, JumpBuffTime);
 		}
 	}
 	Destroy();

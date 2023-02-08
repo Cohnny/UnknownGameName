@@ -73,6 +73,7 @@ void AUnknownCharacter::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& Ou
 
 	DOREPLIFETIME_CONDITION(AUnknownCharacter, OverlappingWeapon,COND_OwnerOnly);
 	DOREPLIFETIME(AUnknownCharacter, Health);
+	DOREPLIFETIME(AUnknownCharacter, Shield);
 	DOREPLIFETIME(AUnknownCharacter, bDisableGameplay);
 }
 
@@ -212,6 +213,7 @@ void AUnknownCharacter::BeginPlay()
 	Super::BeginPlay();
 
 	UpdateHUDHealth();
+	UpdateHUDShield();
 	if (HasAuthority())
 	{
 		OnTakeAnyDamage.AddDynamic(this, &AUnknownCharacter::ReceiveDamage);
@@ -293,6 +295,11 @@ void AUnknownCharacter::PostInitializeComponents()
 	if (Buff)
 	{
 		Buff->Character = this;
+		Buff->SetInitialSpeeds(
+			GetCharacterMovement()->MaxWalkSpeed,
+			GetCharacterMovement()->MaxWalkSpeedCrouched
+		);
+		Buff->SetInitialJumpVelocity(GetCharacterMovement()->JumpZVelocity);
 	}
 }
 
@@ -403,8 +410,25 @@ void AUnknownCharacter::ReceiveDamage(AActor* DamagedActor, float Damage, const 
 	{
 		return;
 	}
-	Health = FMath::Clamp(Health - Damage, 0.f, MaxHealth);
+	float DamageToHealth = Damage;
+	if (Shield > 0.f)
+	{
+		if (Shield >= Damage)
+		{
+			Shield = FMath::Clamp(Shield - Damage, 0.f, MaxShield);
+			DamageToHealth = 0.f;
+		}
+		else
+		{
+			Shield = 0.f;
+			DamageToHealth = FMath::Clamp(DamageToHealth - Shield, 0.f, Damage);
+		}
+	}
+	
+	Health = FMath::Clamp(Health - DamageToHealth, 0.f, MaxHealth);
+	
 	UpdateHUDHealth();
+	UpdateHUDShield();
 	PlayHitReactMontage();
 	if (Health == 0.f)
 	{
@@ -726,12 +750,30 @@ void AUnknownCharacter::OnRep_Health(float LastHealth)
 	}
 }
 
+void AUnknownCharacter::OnRep_Shield(float LastShield)
+{
+	UpdateHUDShield();
+	if (Shield < LastShield)
+	{
+		PlayHitReactMontage();
+	}
+}
+
 void AUnknownCharacter::UpdateHUDHealth()
 {
 	UnknownPlayerController = UnknownPlayerController == nullptr ? Cast<AUnknownPlayerController>(Controller) : UnknownPlayerController;
 	if (UnknownPlayerController)
 	{
 		UnknownPlayerController->SetHUDHealth(Health, MaxHealth);
+	}
+}
+
+void AUnknownCharacter::UpdateHUDShield()
+{
+	UnknownPlayerController = UnknownPlayerController == nullptr ? Cast<AUnknownPlayerController>(Controller) : UnknownPlayerController;
+	if (UnknownPlayerController)
+	{
+		UnknownPlayerController->SetHUDShield(Shield, MaxShield);
 	}
 }
 
