@@ -8,7 +8,7 @@ public class UnknownGameName : ModuleRules
 	{
 		PCHUsage = PCHUsageMode.UseExplicitOrSharedPCHs;
 	
-		PublicDependencyModuleNames.AddRange(new string[] { "Core", "CoreUObject", "Engine", "InputCore", "Niagara" });
+		PublicDependencyModuleNames.AddRange(new string[] { "Core", "CoreUObject", "Engine", "InputCore", "Niagara", "FBX" });
 
 		PrivateDependencyModuleNames.AddRange(new string[] { "Slate", "SlateCore" });
 

@@ -103,7 +103,14 @@ void AUnknownCharacter::Elim(APlayerController* AttackerController)
 
 	if (Combat && Combat->EquippedWeapon)
 	{
-		Combat->EquippedWeapon->Dropped();
+		if (Combat->EquippedWeapon->bDestroyWeapon)
+		{
+			Combat->EquippedWeapon->Destroy();
+		}
+		else
+		{
+			Combat->EquippedWeapon->Dropped();
+		}
 	}
 	MulticastElim(AttackerName);
 	GetWorldTimerManager().SetTimer(
@@ -798,6 +805,7 @@ void AUnknownCharacter::SpawnDefaultWeapon()
 	if (UnknownGameMode && World && !bElimmed && DefaultWeaponClass)
 	{
 		AWeapon* StartingWeapon = World->SpawnActor<AWeapon>(DefaultWeaponClass);
+		StartingWeapon->bDestroyWeapon = true;
 		if (Combat)
 		{
 			Combat->EquipWeapon(StartingWeapon);
