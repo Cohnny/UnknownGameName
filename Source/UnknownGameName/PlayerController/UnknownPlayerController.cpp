@@ -194,6 +194,11 @@ void AUnknownPlayerController::SetHUDWeaponAmmo(int32 Ammo)
 		FString AmmoText = FString::Printf(TEXT("%d"), Ammo);
 		UnknownHUD->CharacterOverlay->WeaponAmmoAmount->SetText(FText::FromString(AmmoText));
 	}
+	else
+	{
+		bInitializeWeaponAmmo = true;
+		HUDWeaponAmmo = Ammo;
+	}
 }
 
 void AUnknownPlayerController::SetHUDCarriedAmmo(int32 Ammo)
@@ -206,6 +211,11 @@ void AUnknownPlayerController::SetHUDCarriedAmmo(int32 Ammo)
 	{
 		FString AmmoText = FString::Printf(TEXT("%d"), Ammo);
 		UnknownHUD->CharacterOverlay->CarriedAmmoAmount->SetText(FText::FromString(AmmoText));
+	}
+	else
+	{
+		bInitializeCarriedAmmo = true;
+		HUDCarriedAmmo = Ammo;
 	}
 }
 
@@ -353,6 +363,8 @@ void AUnknownPlayerController::PollInit()
 				if (bInitializeShield) SetHUDShield(HUDShield, HUDMaxShield);
 				if (bInitializeScore) SetHUDScore(HUDScore);
 				if (bInitializeDefeats) SetHUDDefeats(HUDDefeats);
+				if (bInitializeCarriedAmmo) SetHUDCarriedAmmo(HUDCarriedAmmo);
+				if (bInitializeWeaponAmmo) SetHUDWeaponAmmo(HUDWeaponAmmo);
 				
 				AUnknownCharacter* UnknownCharacter = Cast<AUnknownCharacter>(GetPawn());
 				if (UnknownCharacter && UnknownCharacter->GetCombat())

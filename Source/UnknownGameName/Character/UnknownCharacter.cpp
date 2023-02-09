@@ -2,6 +2,8 @@
 
 
 #include "UnknownCharacter.h"
+
+#include "FbxImporter.h"
 #include "GameFramework/SpringArmComponent.h"
 #include "Camera/CameraComponent.h"
 #include "GameFramework/CharacterMovementComponent.h"
@@ -212,6 +214,8 @@ void AUnknownCharacter::BeginPlay()
 {
 	Super::BeginPlay();
 
+	SpawnDefaultWeapon();
+	UpdateHUDAmmo();
 	UpdateHUDHealth();
 	UpdateHUDShield();
 	if (HasAuthority())
@@ -774,6 +778,30 @@ void AUnknownCharacter::UpdateHUDShield()
 	if (UnknownPlayerController)
 	{
 		UnknownPlayerController->SetHUDShield(Shield, MaxShield);
+	}
+}
+
+void AUnknownCharacter::UpdateHUDAmmo()
+{
+	UnknownPlayerController = UnknownPlayerController == nullptr ? Cast<AUnknownPlayerController>(Controller) : UnknownPlayerController;
+	if (UnknownPlayerController && Combat && Combat->EquippedWeapon)
+	{
+		UnknownPlayerController->SetHUDCarriedAmmo(Combat->CarriedAmmo);
+		UnknownPlayerController->SetHUDWeaponAmmo(Combat->EquippedWeapon->GetAmmo());
+	}
+}
+
+void AUnknownCharacter::SpawnDefaultWeapon()
+{
+	AUnknownGameMode* UnknownGameMode = Cast<AUnknownGameMode>(UGameplayStatics::GetGameMode(this));
+	UWorld* World = GetWorld();
+	if (UnknownGameMode && World && !bElimmed && DefaultWeaponClass)
+	{
+		AWeapon* StartingWeapon = World->SpawnActor<AWeapon>(DefaultWeaponClass);
+		if (Combat)
+		{
+			Combat->EquipWeapon(StartingWeapon);
+		}
 	}
 }
 

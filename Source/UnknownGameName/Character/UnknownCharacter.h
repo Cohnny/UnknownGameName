@@ -39,6 +39,9 @@ public:
 
 	void UpdateHUDHealth();
 	void UpdateHUDShield();
+	void UpdateHUDAmmo();
+
+	void SpawnDefaultWeapon();
 
 protected:
 
@@ -213,8 +216,16 @@ private:
 	/**
 	 * Grenade
 	 */
+	
 	UPROPERTY(VisibleAnywhere)
 	UStaticMeshComponent* AttachedGrenade;
+
+	/**
+	 * Default weapon
+	 */
+
+	UPROPERTY(EditAnywhere)
+	TSubclassOf<AWeapon> DefaultWeaponClass;
 
 public:
 	void SetOverlappingWeapon(AWeapon* Weapon);
