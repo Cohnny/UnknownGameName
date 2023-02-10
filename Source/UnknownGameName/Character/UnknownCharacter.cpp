@@ -99,19 +99,7 @@ void AUnknownCharacter::Elim(APlayerController* AttackerController)
 			AttackerName = AttackerUnknownPlayerState->GetPlayerName();
 		}
 	}
-	MulticastElim(AttackerName);
-
-	if (Combat && Combat->EquippedWeapon)
-	{
-		if (Combat->EquippedWeapon->bDestroyWeapon)
-		{
-			Combat->EquippedWeapon->Destroy();
-		}
-		else
-		{
-			Combat->EquippedWeapon->Dropped();
-		}
-	}
+	DropOrDestroyWeapons();
 	MulticastElim(AttackerName);
 	GetWorldTimerManager().SetTimer(
 		ElimTimer,
@@ -119,6 +107,50 @@ void AUnknownCharacter::Elim(APlayerController* AttackerController)
 		&AUnknownCharacter::ElimTimerFinished,
 		ElimDelay
 	);
+}
+
+void AUnknownCharacter::ElimTimerFinished()
+{
+	AUnknownGameMode* UnknownGameMode = GetWorld()->GetAuthGameMode<AUnknownGameMode>();
+	if (UnknownGameMode)
+	{
+		UnknownGameMode->RequestRespawn(this, Controller);
+		if (AUnknownPlayerController* UnknownController = Cast<AUnknownPlayerController>(Controller))
+		{
+			UnknownController->ClearElimText();
+		}
+	}
+}
+
+void AUnknownCharacter::DropOrDestroyWeapon(AWeapon* Weapon)
+{
+	if (Weapon == nullptr)
+	{
+		return;
+	}
+	if (Weapon->bDestroyWeapon)
+	{
+		Weapon->Destroy();
+	}
+	else
+	{
+		Weapon->Dropped();
+	}
+}
+
+void AUnknownCharacter::DropOrDestroyWeapons()
+{
+	if (Combat)
+	{
+		if (Combat->EquippedWeapon)
+		{
+			DropOrDestroyWeapon(Combat->EquippedWeapon);
+		}
+		if (Combat->SecondaryWeapon)
+		{
+			DropOrDestroyWeapon(Combat->SecondaryWeapon);
+		}
+	}
 }
 
 void AUnknownCharacter::Destroyed()
@@ -201,19 +233,6 @@ void AUnknownCharacter::MulticastElim_Implementation(const FString& AttackerName
 	if (bHideSniperScope)
 	{
 		ShowSniperscopeWidget(false);
-	}
-}
-
-void AUnknownCharacter::ElimTimerFinished()
-{
-	AUnknownGameMode* UnknownGameMode = GetWorld()->GetAuthGameMode<AUnknownGameMode>();
-	if (UnknownGameMode)
-	{
-		UnknownGameMode->RequestRespawn(this, Controller);
-		if (AUnknownPlayerController* UnknownController = Cast<AUnknownPlayerController>(Controller))
-		{
-			UnknownController->ClearElimText();
-		}
 	}
 }
 
@@ -508,7 +527,14 @@ void AUnknownCharacter::ServerEquipButtonPressed_Implementation()
 {
 	if (Combat)
 	{
-		Combat->EquipWeapon(OverlappingWeapon);
+		if (OverlappingWeapon)
+		{
+			Combat->EquipWeapon(OverlappingWeapon);
+		}
+		else if (Combat->ShouldSwapWeapons())
+		{
+			Combat->SwapWeapons();
+		}
 	}
 }
 

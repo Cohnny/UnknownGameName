@@ -2,6 +2,8 @@
 
 
 #include "UnknownPlayerController.h"
+
+#include "Components/Image.h"
 #include "UnknownGameName/HUD/UnknownHUD.h"
 #include "UnknownGameName/HUD/CharacterOverlay.h"
 #include "Components/ProgressBar.h"
@@ -14,6 +16,7 @@
 #include "Kismet/GameplayStatics.h"
 #include "UnknownGameName/UnknownComponents/CombatComponent.h"
 #include "UnknownGameName/GameState/UnknownGameState.h"
+#include "Components/Image.h"
 
 void AUnknownPlayerController::BeginPlay()
 {
@@ -40,6 +43,53 @@ void AUnknownPlayerController::Tick(float DeltaTime)
 	SetHUDTime();
 	CheckTimeSync(DeltaTime);
 	PollInit();
+	CheckPing(DeltaTime);
+	ShowPing(DeltaTime);
+}
+
+void AUnknownPlayerController::CheckPing(float DeltaTime)
+{
+	HighPingRunningTime += DeltaTime;
+	if (HighPingRunningTime > CheckPingFrequency)
+	{
+		PlayerState = PlayerState == nullptr ? GetPlayerState<APlayerState>() : PlayerState;
+		if (PlayerState)
+		{
+			if (PlayerState->GetPingInMilliseconds() > HighPingThreshold)
+			{
+				HighPingWaning();
+				PingAnimationRunningTime = 0.f;
+			}
+		}
+		HighPingRunningTime = 0.f;
+	}
+	bool bHighPingAnimationPlaying =
+		UnknownHUD &&
+		UnknownHUD->CharacterOverlay &&
+		UnknownHUD->CharacterOverlay->HighPingAnimation &&
+		UnknownHUD->CharacterOverlay->IsAnimationPlaying(UnknownHUD->CharacterOverlay->HighPingAnimation);
+	if (bHighPingAnimationPlaying)
+	{
+		PingAnimationRunningTime += DeltaTime;
+		if (PingAnimationRunningTime > HighPingDuration)
+		{
+			StopHighPingWarning();
+		}
+	}
+}
+
+void AUnknownPlayerController::ShowPing(float DeltaTime)
+{
+	PlayerState = PlayerState == nullptr ? GetPlayerState<APlayerState>() : PlayerState;
+	if (PlayerState)
+	{
+		float CurrentPing = PlayerState->GetPingInMilliseconds();
+		if (UnknownHUD && UnknownHUD->CharacterOverlay && UnknownHUD->CharacterOverlay->PingAmountText)
+		{
+			FString PingText = FString::Printf(TEXT("%d ms"), FMath::FloorToInt(CurrentPing));
+			UnknownHUD->CharacterOverlay->PingAmountText->SetText(FText::FromString(PingText));
+		}
+	}
 }
 
 void AUnknownPlayerController::CheckTimeSync(float DeltaTime)
@@ -49,6 +99,37 @@ void AUnknownPlayerController::CheckTimeSync(float DeltaTime)
 	{
 		ServerRequestServerTime(GetWorld()->GetTimeSeconds());
 		TimeSyncRunningTime = 0.f;
+	}
+}
+
+void AUnknownPlayerController::HighPingWaning()
+{
+	UnknownHUD = UnknownHUD == nullptr ? Cast<AUnknownHUD>(GetHUD()) : UnknownHUD;
+	bool bHUDValid = UnknownHUD &&
+		UnknownHUD->CharacterOverlay &&
+		UnknownHUD->CharacterOverlay->HighPingImage &&
+		UnknownHUD->CharacterOverlay->HighPingAnimation;
+	if (bHUDValid)
+	{
+		UnknownHUD->CharacterOverlay->HighPingImage->SetOpacity(1.f);
+		UnknownHUD->CharacterOverlay->PlayAnimation(UnknownHUD->CharacterOverlay->HighPingAnimation);
+	}
+}
+
+void AUnknownPlayerController::StopHighPingWarning()
+{
+	UnknownHUD = UnknownHUD == nullptr ? Cast<AUnknownHUD>(GetHUD()) : UnknownHUD;
+	bool bHUDValid = UnknownHUD &&
+		UnknownHUD->CharacterOverlay &&
+		UnknownHUD->CharacterOverlay->HighPingImage &&
+		UnknownHUD->CharacterOverlay->HighPingAnimation;
+	if (bHUDValid)
+	{
+		UnknownHUD->CharacterOverlay->HighPingImage->SetOpacity(0.f);
+		if (UnknownHUD->CharacterOverlay->IsAnimationPlaying(UnknownHUD->CharacterOverlay->HighPingAnimation))
+		{
+			UnknownHUD->CharacterOverlay->StopAnimation(UnknownHUD->CharacterOverlay->HighPingAnimation);
+		}
 	}
 }
 
