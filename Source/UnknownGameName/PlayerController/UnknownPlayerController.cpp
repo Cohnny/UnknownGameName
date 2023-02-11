@@ -112,7 +112,11 @@ void AUnknownPlayerController::HighPingWaning()
 	if (bHUDValid)
 	{
 		UnknownHUD->CharacterOverlay->HighPingImage->SetOpacity(1.f);
-		UnknownHUD->CharacterOverlay->PlayAnimation(UnknownHUD->CharacterOverlay->HighPingAnimation);
+		UnknownHUD->CharacterOverlay->PlayAnimation(
+			UnknownHUD->CharacterOverlay->HighPingAnimation,
+			0.f,
+			5
+			);
 	}
 }
 
