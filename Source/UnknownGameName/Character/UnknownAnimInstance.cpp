@@ -78,6 +78,10 @@ void UUnknownAnimInstance::NativeUpdateAnimation(float DeltaTime)
 	}
 
 	bUseFABRIK = UnknownCharacter->GetCombatState() == ECombatState::ECS_Unoccupied;
+	if (UnknownCharacter->IsLocallyControlled() && UnknownCharacter->GetCombatState() != ECombatState::ECS_ThrowingGrenade)
+	{
+		bUseFABRIK = !UnknownCharacter->IsLocallyReloading();
+	}
 	bUseAimOffsets = UnknownCharacter->GetCombatState() == ECombatState::ECS_Unoccupied && !UnknownCharacter->GetDisableGameplay();
 	bTransformRightHand = UnknownCharacter->GetCombatState() == ECombatState::ECS_Unoccupied && !UnknownCharacter->GetDisableGameplay();
 }
