@@ -36,6 +36,8 @@ public:
 	void SetElimText(FString InText);
 	void ClearElimText();
 
+	float SingleTripTime = 0.f;
+
 protected:
 	virtual void BeginPlay() override;
 	void SetHUDTime();

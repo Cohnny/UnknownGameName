@@ -9,16 +9,15 @@
 #include "Sound/SoundCue.h"
 #include "DrawDebugHelpers.h"
 #include "EntitySystem/MovieSceneEntitySystemRunner.h"
+#include "UnknownGameName/PlayerController/UnknownPlayerController.h"
+#include "UnknownGameName/UnknownComponents/LagCompensationComponent.h"
 
 void AHitScanWeapon::Fire(const FVector& HitTarget)
 {
 	Super::Fire(HitTarget);
 
 	APawn* OwnerPawn = Cast<APawn>(GetOwner());
-	if (OwnerPawn == nullptr)
-	{
-		return;
-	}
+	if (OwnerPawn == nullptr) return;
 	AController* InstigatorController = OwnerPawn->GetController();
 
 	const USkeletalMeshSocket* MuzzleFlashSocket = GetWeaponMesh()->GetSocketByName("MuzzleFlash");
@@ -31,15 +30,33 @@ void AHitScanWeapon::Fire(const FVector& HitTarget)
 		WeaponTraceHit(Start, HitTarget, FireHit);
 
 		AUnknownCharacter* UnknownCharacter = Cast<AUnknownCharacter>(FireHit.GetActor());
-		if (UnknownCharacter && HasAuthority() && InstigatorController)
+		if (UnknownCharacter && InstigatorController)
 		{
-			UGameplayStatics::ApplyDamage(
-				UnknownCharacter,
-				Damage,
-				InstigatorController,
-				this,
-				UDamageType::StaticClass()
-			);
+			if (HasAuthority() && !bUseServerSideRewind)
+			{
+				UGameplayStatics::ApplyDamage(
+					UnknownCharacter,
+					Damage,
+					InstigatorController,
+					this,
+					UDamageType::StaticClass()
+				);
+			}
+			if (!HasAuthority() && bUseServerSideRewind)
+			{
+				UnknownOwnerCharacter = UnknownOwnerCharacter == nullptr ? Cast<AUnknownCharacter>(OwnerPawn) : UnknownOwnerCharacter;
+				UnknownOwnerController = UnknownOwnerController == nullptr ? Cast<AUnknownPlayerController>(InstigatorController) : UnknownOwnerController;
+				if (UnknownOwnerController && UnknownOwnerCharacter && UnknownOwnerCharacter->GetLagCompensation())
+				{
+					UnknownOwnerCharacter->GetLagCompensation()->ServerScoreRequest(
+						UnknownCharacter,
+						Start,
+						HitTarget,
+						UnknownOwnerController->GetServerTime() - UnknownOwnerController->SingleTripTime,
+						this
+					);
+				}
+			}
 		}
 		if (ImpactParticles)
 		{
