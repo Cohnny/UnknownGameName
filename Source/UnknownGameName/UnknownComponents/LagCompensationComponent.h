@@ -2,7 +2,6 @@
 
 #include "CoreMinimal.h"
 #include "Components/ActorComponent.h"
-#include "UnknownGameName/Character/UnknownCharacter.h"
 #include "LagCompensationComponent.generated.h"
 
 USTRUCT(BlueprintType)
@@ -30,6 +29,9 @@ struct FFramePackage
 
 	UPROPERTY()
 	TMap<FName, FBoxInformation> HitBoxInfo;
+
+	UPROPERTY()
+	AUnknownCharacter* Character;
 };
 
 USTRUCT(BlueprintType)
@@ -44,6 +46,18 @@ struct FServerSideRewindResult
 	bool bHeadshot;
 };
 
+USTRUCT(BlueprintType)
+struct FShotgunFServerSideRewindResult
+{
+	GENERATED_BODY()
+
+	UPROPERTY()
+	TMap<AUnknownCharacter*, uint32> HeadShots;
+	
+	UPROPERTY()
+	TMap<AUnknownCharacter*, uint32> BodyShots;
+};
+
 UCLASS( ClassGroup=(Custom), meta=(BlueprintSpawnableComponent) )
 class UNKNOWNGAMENAME_API ULagCompensationComponent : public UActorComponent
 {
@@ -55,14 +69,14 @@ public:
 	virtual void TickComponent(float DeltaTime, ELevelTick TickType, FActorComponentTickFunction* ThisTickFunction) override;
 	void ShowFramePackage(const FFramePackage& Package, const FColor& Color);
 	FServerSideRewindResult ServerSideRewind(
-		class AUnknownCharacter* HitCharacter,
+		AUnknownCharacter* HitCharacter,
 		const FVector_NetQuantize& TraceStart,
 		const FVector_NetQuantize& HitLocation,
 		float HitTime);
 
 	UFUNCTION(Server, Reliable)
 	void ServerScoreRequest(
-		AUnknownCharacter* HitCharacter,
+		class AUnknownCharacter* HitCharacter,
 		const FVector_NetQuantize& TraceStart,
 		const FVector_NetQuantize& HitLocation,
 		float HitTime,
@@ -83,6 +97,22 @@ protected:
 	void ResetHitBoxes(AUnknownCharacter* HitCharacter, const FFramePackage& Package);
 	void EnableCharacterMeshCollision(AUnknownCharacter* HitCharacter, ECollisionEnabled::Type CollisionEnabled);
 	void SaveFramePackage();
+	FFramePackage GetFrameToCheck(AUnknownCharacter* HitCharacter, float HitTime);
+	
+	/**
+	 * Shotgun
+	 */
+	FShotgunFServerSideRewindResult ShotgunServerSideRewind(
+		const TArray<AUnknownCharacter*>& HitCharacters,
+		const FVector_NetQuantize& TraceStart,
+		const TArray<FVector_NetQuantize>& HitLocations,
+		float HitTime);
+
+	FShotgunFServerSideRewindResult ShotgunConfirmHit(
+		const TArray<FFramePackage>& FramePackages,
+		const FVector_NetQuantize& TraceStart,
+		const TArray<FVector_NetQuantize>& HitLocations
+	);
 	
 private:
 	UPROPERTY()
